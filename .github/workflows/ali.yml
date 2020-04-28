@@ -37,6 +37,11 @@ jobs:
         ARGS: "-avz --delete"
         SOURCE: "src/"
         TARGET: "/nodeservice/node-test/src"
+    - name: Build the Docker image
+      run: |
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        docker build -t $IMAGE_NAM .
+        docker push $IMAGE_NAME
     - name: ssh Deploy package
       uses: easingthemes/ssh-deploy@v2.1.2
       env:
