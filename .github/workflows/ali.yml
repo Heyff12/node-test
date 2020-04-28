@@ -8,7 +8,7 @@ on:
     branches: [ master ]
 
 env:
-  IMAGE_NAME: Heyff12/node-test
+  IMAGE_NAME: heyff12/node-test
   VERSION: latest
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -72,7 +72,7 @@ jobs:
     needs: deploy-app
     runs-on: ubuntu-latest
     env:
-      CONTAINER_NAME: my-node-test
+      CONTAINER_NAME: heyff12-node-test
       DOCKER_REG: $IMAGE_NAME:$VERSION
     steps:
       - name: deploy on remote server
