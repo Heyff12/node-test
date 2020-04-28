@@ -27,7 +27,7 @@ jobs:
     - run: npm test
       env:
         CI: true
-    - name: ssh Deploy
+    - name: ssh Deploy src
       uses: easingthemes/ssh-deploy@v2.1.2
       env:
         SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
@@ -37,6 +37,7 @@ jobs:
         ARGS: "-avz --delete"
         SOURCE: "src/"
         TARGET: "/nodeservice/node-test/src"
+    - name: ssh Deploy package
       uses: easingthemes/ssh-deploy@v2.1.2
       env:
         SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
