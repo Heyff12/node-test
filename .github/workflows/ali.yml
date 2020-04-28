@@ -7,48 +7,83 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  IMAGE_NAME: Heyff12/node-test
+  VERSION: latest
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [12.10.0]
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
-      env:
-        CI: true
-    - name: ssh Deploy src
-      uses: easingthemes/ssh-deploy@v2.1.2
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
-        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-        REMOTE_USER: ${{ secrets.REMOTE_USER }}
-        REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
-        ARGS: "-avz --delete"
-        SOURCE: "src/"
-        TARGET: "/nodeservice/node-test/src"
-    - name: Build the Docker image
-      run: |
-        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        docker build -t $IMAGE_NAM .
-        docker push $IMAGE_NAME
-    - name: ssh Deploy package
-      uses: easingthemes/ssh-deploy@v2.1.2
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
-        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-        REMOTE_USER: ${{ secrets.REMOTE_USER }}
-        REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
-        ARGS: "-avz --delete"
-        SOURCE: "package*.json"
-        TARGET: "/nodeservice/node-test"
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
+        env:
+          CI: true
+
+  docker-push-image:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build the Docker image
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker build -t $IMAGE_NAME:$VERSION .
+          docker push $IMAGE_NAME:$VERSION
+
+  deploy-app:
+    needs: docker-push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh Deploy src
+        uses: easingthemes/ssh-deploy@v2.1.2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+          ARGS: "-avz --delete"
+          SOURCE: "src/"
+          TARGET: "/nodeservice/node-test/src"
+
+      - name: ssh Deploy package
+        uses: easingthemes/ssh-deploy@v2.1.2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+          ARGS: "-avz --delete"
+          SOURCE: "package*.json"
+          TARGET: "/nodeservice/node-test"
+  
+  docker-run:
+    needs: deploy-app
+    runs-on: ubuntu-latest
+    env:
+      CONTAINER_NAME: my-node-test
+      DOCKER_REG: $IMAGE_NAME:$VERSION
+    steps:
+      - name: deploy on remote server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.ACCESS_TOKEN }}
+          port: ${{ secrets.REMOTE_PORT }}
+          envs: CONTAINER_NAME, DOCKER_REG
+          script: |
+            if [ $(docker ps -a | grep -c $CONTAINER_NAME) -gt 0 ]; then docker stop $CONTAINER_NAME;docker rm $CONTAINER_NAME;fi
+            docker run --name $CONTAINER_NAME -d -p 3002:3002 $DOCKER_REG
+  
