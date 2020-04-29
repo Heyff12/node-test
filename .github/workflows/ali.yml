@@ -113,10 +113,9 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.ACCESS_TOKEN }}
           port: ${{ secrets.REMOTE_PORT }}
+          command_timeout: 30m
           envs: CONTAINER_NAME, DOCKER_REG
           script: |
-            pwd
-            ls
             docker pull $DOCKER_REG
             docker image prune -f
             if [ $(docker ps -a | grep -c $CONTAINER_NAME) -gt 0 ]; then docker stop $CONTAINER_NAME;docker rm $CONTAINER_NAME;fi
