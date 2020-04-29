@@ -32,28 +32,52 @@ jobs:
         env:
           CI: true
 
-      - name: store file
-        uses: actions/upload-artifact@v2
-        with:
-          name: store
-          path: ./
-
-  docker-push-image:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: store
       - name: Build the Docker image
         run: |
           echo `pwd`
           echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
           docker build -t $IMAGE_NAME:$VERSION -f ./Dockerfile .
           docker push $IMAGE_NAME:$VERSION
+
+  # docker-push-image:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Build the Docker image
+  #       run: |
+  #         echo `pwd`
+  #         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  #         docker build -t $IMAGE_NAME:$VERSION -f ./Dockerfile .
+  #         docker push $IMAGE_NAME:$VERSION
+
+  # deploy-app:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: ssh Deploy src
+  #       uses: easingthemes/ssh-deploy@v2.1.2
+  #       env:
+  #         SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
+  #         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+  #         REMOTE_USER: ${{ secrets.REMOTE_USER }}
+  #         REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+  #         ARGS: "-avz --delete"
+  #         SOURCE: "src/"
+  #         TARGET: "/nodeservice/node-test/src"
+
+  #     - name: ssh Deploy package
+  #       uses: easingthemes/ssh-deploy@v2.1.2
+  #       env:
+  #         SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
+  #         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+  #         REMOTE_USER: ${{ secrets.REMOTE_USER }}
+  #         REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+  #         ARGS: "-avz --delete"
+  #         SOURCE: "package*.json"
+  #         TARGET: "/nodeservice/node-test"
   
   docker-run:
-    needs: docker-push-image
+    needs: build
     runs-on: ubuntu-latest
     env:
       CONTAINER_NAME: heyff12-node-test
