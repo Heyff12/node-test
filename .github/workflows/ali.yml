@@ -40,7 +40,7 @@ jobs:
         run: |
           echo `pwd`
           echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-          docker build -t $IMAGE_NAME:$VERSION --file ./Dockerfile .
+          docker build -t $IMAGE_NAME:$VERSION -f ./Dockerfile .
           docker push $IMAGE_NAME:$VERSION
 
   deploy-app:
