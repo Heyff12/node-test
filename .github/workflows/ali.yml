@@ -39,27 +39,27 @@ jobs:
           docker build -t $IMAGE_NAME:$VERSION -f ./Dockerfile .
           docker push $IMAGE_NAME:$VERSION
 
-      - name: ssh Deploy src
-        uses: easingthemes/ssh-deploy@v2.1.2
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
-          ARGS: "-avz --delete"
-          SOURCE: "src/"
-          TARGET: "/nodeservice/node-test/src"
+      # - name: ssh Deploy src
+      #   uses: easingthemes/ssh-deploy@v2.1.2
+      #   env:
+      #     SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
+      #     REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+      #     REMOTE_USER: ${{ secrets.REMOTE_USER }}
+      #     REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+      #     ARGS: "-avz --delete"
+      #     SOURCE: "src/"
+      #     TARGET: "/nodeservice/node-test/src"
 
-      - name: ssh Deploy package
-        uses: easingthemes/ssh-deploy@v2.1.2
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
-          ARGS: "-avz --delete"
-          SOURCE: "package*.json"
-          TARGET: "/nodeservice/node-test"
+      # - name: ssh Deploy package
+      #   uses: easingthemes/ssh-deploy@v2.1.2
+      #   env:
+      #     SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
+      #     REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+      #     REMOTE_USER: ${{ secrets.REMOTE_USER }}
+      #     REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+      #     ARGS: "-avz --delete"
+      #     SOURCE: "package*.json"
+      #     TARGET: "/nodeservice/node-test"
 
   # docker-push-image:
   #   needs: build
@@ -114,6 +114,8 @@ jobs:
           port: ${{ secrets.REMOTE_PORT }}
           envs: CONTAINER_NAME, DOCKER_REG
           script: |
+            docker pull $DOCKER_REG
+            docker image prune
             if [ $(docker ps -a | grep -c $CONTAINER_NAME) -gt 0 ]; then docker stop $CONTAINER_NAME;docker rm $CONTAINER_NAME;fi
             docker run --name $CONTAINER_NAME -d -p 3002:3002 $DOCKER_REG
   
