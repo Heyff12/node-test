@@ -104,7 +104,7 @@ jobs:
     env:
       CONTAINER_NAME: heyff12-node-test
       # DOCKER_REG: $IMAGE_NAME:$VERSION
-      DOCKER_REG: heyff12/node-test:latest
+      DOCKER_REG: heyff12/node-test
     steps:
       - name: deploy on remote server
         uses: appleboy/ssh-action@master
