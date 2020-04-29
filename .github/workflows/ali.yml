@@ -115,7 +115,7 @@ jobs:
           envs: CONTAINER_NAME, DOCKER_REG
           script: |
             docker pull $DOCKER_REG
-            docker image prune
+            docker image prune -f
             if [ $(docker ps -a | grep -c $CONTAINER_NAME) -gt 0 ]; then docker stop $CONTAINER_NAME;docker rm $CONTAINER_NAME;fi
             docker run --name $CONTAINER_NAME -d -p 3002:3002 $DOCKER_REG
   
