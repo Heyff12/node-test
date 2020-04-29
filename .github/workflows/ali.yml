@@ -103,7 +103,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CONTAINER_NAME: heyff12-node-test
-      DOCKER_REG: $IMAGE_NAME:$VERSION
+      # DOCKER_REG: $IMAGE_NAME:$VERSION
+      DOCKER_REG: heyff12/node-test:latest
     steps:
       - name: deploy on remote server
         uses: appleboy/ssh-action@master
@@ -117,5 +118,5 @@ jobs:
             docker pull $DOCKER_REG
             docker image prune -f
             if [ $(docker ps -a | grep -c $CONTAINER_NAME) -gt 0 ]; then docker stop $CONTAINER_NAME;docker rm $CONTAINER_NAME;fi
-            docker run --name $CONTAINER_NAME -d -p 3002:3002 $DOCKER_REG
+            docker run --name $CONTAINER_NAME -d --rm -p 3002:3002 $DOCKER_REG
   
